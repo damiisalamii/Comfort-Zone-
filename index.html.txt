@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gefühl der Einsamkeit? – Safe Space Prototyp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script>
+        // Design-Tokens im warmen Pfirsich-/Creme- und Flyer-Orange-Stil
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
+                        display: ["Inter", "system-ui", "-apple-system", "sans-serif"]
+                    },
+                    colors: {
+                        safeBg: "#FBF3E8",
+                        safeBgWarm: "#FCECD8",
+                        safeCard: "#FFFFFF",
+                        safeOrange: "#F5A448",
+                        safeOrangeLight: "#F7B35E",
+                        safeInk: "#181818",
+                        safeBlue: "#A9D8F5",
+                        safeYellow: "#FBE870",
+                        safeLime: "#C6F08A",
+                        safePeach: "#F7B787",
+                        safeLilac: "#B79DF2"
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        /* Sanfte Einblend-Animation und ruhige Grundgestaltung */
+        body {
+            font-family: "Inter", system-ui, -apple-system, sans-serif;
+            background-color: #FBF3E8;
+            color: #181818;
+            overflow-x: hidden;
+        }
+
+        @keyframes gentleFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: gentleFadeIn 0.24s ease-out forwards;
+        }
+
+        /* Weiche organische Hintergrundformen ohne Überstimulation */
+        .bg-blob {
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(2px);
+            opacity: 0.72;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between relative selection:bg-safeOrange/40">
+
+    <!-- Organische Hintergrundformen (Hellblau, Gelb, Lindgrün, Pfirsich) -->
+    <svg class="bg-blob -top-12 -left-12 w-64 h-64 sm:w-80 sm:h-80" viewBox="0 0 240 240" fill="none" aria-hidden="true">
+        <path d="M28 18C92 -8 175 24 196 86C217 148 164 218 96 212C28 206 -36 44 28 18Z" fill="#A9D8F5" />
+    </svg>
+    <svg class="bg-blob top-10 -right-14 w-52 h-52 sm:w-72 sm:h-72" viewBox="0 0 220 220" fill="none" aria-hidden="true">
+        <circle cx="110" cy="110" r="78" stroke="#FBE870" stroke-width="18" />
+    </svg>
+    <svg class="bg-blob bottom-24 -left-10 w-44 h-44 sm:w-60 sm:h-60" viewBox="0 0 200 200" fill="none" aria-hidden="true">
+        <path d="M98 18L114 72L168 62L126 100L162 144L106 124L78 174L76 118L22 108L72 82L98 18Z" fill="#C6F08A" />
+    </svg>
+    <svg class="bg-blob -bottom-14 -right-12 w-60 h-60 sm:w-80 sm:h-80" viewBox="0 0 240 240" fill="none" aria-hidden="true">
+        <path d="M55 215C45 125 115 55 215 55V215H55Z" fill="#F7B787" />
+    </svg>
+
+    <!-- Dezenter Benachrichtigungs-Toast oben -->
+    <div id="toast-banner" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md bg-safeCard border border-safeOrange/60 shadow-lg rounded-2xl px-4 py-3 flex items-start justify-between gap-3 fade-in">
+        <div class="space-y-0.5">
+            <p id="toast-title" class="text-xs font-bold text-safeInk"></p>
+            <p id="toast-desc" class="text-xs text-stone-600"></p>
+        </div>
+        <button type="button" onclick="hideToast()" class="text-stone-400 hover:text-safeInk text-sm font-bold px-1 cursor-pointer" aria-label="Hinweis schließen">
+            ✕
+        </button>
+    </div>
+
+    <!-- Oberste Leiste: links bewusst leer ohne "BBS Kusel · Offenes Ohr", rechts Status + Freunde/Matches + Orga-Ansicht -->
+    <header class="relative z-10 w-full max-w-xl mx-auto px-4 pt-5 pb-2 flex items-center justify-between gap-2">
+        <div class="min-h-[36px]"></div>
+        <div class="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+            <button type="button" onclick="openStatusView()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-safeCard/95 hover:bg-white border border-stone-200/90 shadow-xs text-xs font-semibold text-safeInk transition-all cursor-pointer">
+                <span>Termin-Status</span>
+            </button>
+            <button type="button" onclick="openCommunityView()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-safeCard/95 hover:bg-white border border-stone-200/90 shadow-xs text-xs font-semibold text-safeInk transition-all cursor-pointer">
+                <span>Freunde / Matches</span>
+                <span id="profiles-count-badge" class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-safeLilac/35 text-safeInk text-[11px] font-bold">0</span>
+            </button>
+            <button type="button" onclick="openOrgaModal()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-safeCard/95 hover:bg-white border border-stone-200/90 shadow-xs text-xs font-semibold text-safeInk transition-all cursor-pointer">
+                <span>Orga-Ansicht</span>
+                <span id="orga-open-badge" class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-safeOrange/35 text-safeInk text-[11px] font-bold">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Hauptbereich -->
+    <main class="relative z-10 w-full max-w-xl mx-auto px-4 py-3 flex-1 flex flex-col justify-center">
+
+        <!-- ============================================================ -->
+        <!-- SCHRITT 1 / 3: RUHIGER EINSTIEG MIT ORANGE-HEADER           -->
+        <!-- ============================================================ -->
+        <section id="step-1" class="fade-in bg-safeCard rounded-[28px] shadow-md shadow-amber-950/5 border border-stone-200/70 overflow-hidden">
+            <div class="bg-gradient-to-br from-safeOrange to-safeOrangeLight px-6 pt-6 pb-7 text-safeInk">
+                <div class="flex items-center justify-between text-xs font-semibold mb-3">
+                    <span class="bg-white/85 text-safeInk px-3 py-1 rounded-full">100 % anonym</span>
+                    <span class="font-bold">1 / 3</span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight">
+                    Gefühl der Einsamkeit?
+                </h1>
+                <p class="mt-2.5 text-sm font-medium text-safeInk/90 leading-relaxed">
+                    This is a safe space. Du bist nicht gezwungen, alles auszufüllen, wenn du es nicht weißt.
+                </p>
+            </div>
+
+            <div class="p-6 space-y-5">
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-stone-700">
+                        Optional – trifft irgendwas davon zu?
+                    </label>
+                    <div id="mood-chips" class="flex flex-wrap gap-2">
+                        <button type="button" data-mood="Allein" onclick="toggleMoodChip(this)" class="mood-chip px-3.5 py-2 rounded-full border border-stone-200 bg-white hover:border-safeInk text-xs font-semibold text-stone-700 transition-all cursor-pointer">
+                            Allein
+                        </button>
+                        <button type="button" data-mood="Ausgeschlossen" onclick="toggleMoodChip(this)" class="mood-chip px-3.5 py-2 rounded-full border border-stone-200 bg-white hover:border-safeInk text-xs font-semibold text-stone-700 transition-all cursor-pointer">
+                            Ausgeschlossen
+                        </button>
+                        <button type="button" data-mood="Wütend" onclick="toggleMoodChip(this)" class="mood-chip px-3.5 py-2 rounded-full border border-stone-200 bg-white hover:border-safeInk text-xs font-semibold text-stone-700 transition-all cursor-pointer">
+                            Wütend
+                        </button>
+                        <button type="button" data-mood="Leer" onclick="toggleMoodChip(this)" class="mood-chip px-3.5 py-2 rounded-full border border-stone-200 bg-white hover:border-safeInk text-xs font-semibold text-stone-700 transition-all cursor-pointer">
+                            Leer
+                        </button>
+                        <button type="button" data-mood="Einfach fertig" onclick="toggleMoodChip(this)" class="mood-chip px-3.5 py-2 rounded-full border border-stone-200 bg-white hover:border-safeInk text-xs font-semibold text-stone-700 transition-all cursor-pointer">
+                            Einfach fertig
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <textarea id="step1-text" rows="4" placeholder="Schreib alles rein, was raus muss..." class="w-full rounded-2xl border border-stone-200 bg-safeBg/45 focus:bg-white focus:border-safeInk focus:outline-none p-4 text-sm text-safeInk placeholder:text-stone-400 resize-none transition-colors"></textarea>
+                    <p class="text-[11px] text-stone-400">
+                        Bitte keine echten Namen von anderen reinschreiben.
+                    </p>
+                </div>
+
+                <button type="button" onclick="goToStep2()" class="w-full py-3.5 px-5 rounded-full bg-safeInk hover:bg-stone-800 text-white font-bold text-sm tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer">
+                    <span>Weiter</span>
+                    <span aria-hidden="true">→</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SCHRITT 2 / 3: RUHIGER, FESTER 3-FRAGEN-CHATBOT                -->
+        <!-- ============================================================ -->
+        <section id="step-2" class="hidden fade-in bg-safeCard rounded-[28px] shadow-md shadow-amber-950/5 border border-stone-200/70 p-6 space-y-5">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-stone-500">Kurzer Check-in</span>
+                <span class="text-xs font-bold text-stone-600">2 / 3</span>
+            </div>
+
+            <div>
+                <h2 class="text-xl sm:text-2xl font-extrabold text-safeInk">
+                    Ein paar ruhige Fragen
+                </h2>
+                <p class="text-xs text-stone-500 mt-1">
+                    Ohne Bewertung oder Ratgeber – einfach kurz antworten.
+                </p>
+            </div>
+
+            <div id="bot-chat-log" class="space-y-3 max-h-72 overflow-y-auto pr-1">
+                <!-- Wird dynamisch befüllt -->
+            </div>
+
+            <div id="bot-action-area" class="pt-1 space-y-2.5">
+                <!-- Wird dynamisch befüllt -->
+            </div>
+
+            <div class="pt-1 border-t border-stone-100 flex items-center justify-between">
+                <button type="button" onclick="goToStep1()" class="text-xs font-semibold text-stone-500 hover:text-safeInk cursor-pointer">
+                    ← Zurück zu Schritt 1
+                </button>
+                <button type="button" onclick="goToStep3()" class="text-xs font-semibold text-stone-500 hover:text-safeInk cursor-pointer">
+                    Direkt zu Schritt 3 →
+                </button>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SCHRITT 3 / 3: TERMIN & VERPFLICHTENDES INTERESSEN-PROFIL    -->
+        <!-- ============================================================ -->
+        <section id="step-3" class="hidden fade-in bg-safeCard rounded-[28px] shadow-md shadow-amber-950/5 border border-stone-200/70 p-6 space-y-5">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-stone-500">Termin & anonymes Profil</span>
+                <span class="text-xs font-bold text-stone-600">3 / 3</span>
+            </div>
+
+            <div>
+                <h2 class="text-xl sm:text-2xl font-extrabold text-safeInk">
+                    Termin in der Mittagspause
+                </h2>
+                <p class="text-xs text-stone-500 mt-1">
+                    Mittagspause 12:50 – 13:35 Uhr · dein Profil hilft auch beim anonymen Kennenlernen.
+                </p>
+            </div>
+
+            <!-- Hervorgehobener Prioritäts-Slot bei berechneter Priorität "Hoch" -->
+            <div id="priority-slot-box" class="hidden rounded-2xl border border-safeOrange bg-safeBgWarm p-4 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-extrabold uppercase tracking-wide bg-safeOrange text-safeInk px-2.5 py-0.5 rounded-full">
+                        Prioritäts-Slot (Hoch)
+                    </span>
+                    <span class="text-[11px] font-medium text-stone-600">Bevorzugt</span>
+                </div>
+                <button type="button" id="priority-slot-btn" onclick="togglePrioritySlot()" class="w-full text-left p-3 rounded-2xl border border-safeOrange bg-white hover:bg-amber-50 transition-all flex items-center justify-between cursor-pointer">
+                    <div>
+                        <span class="block text-sm font-bold text-safeInk">Heute / Nächstmögliche Pause (Priorität)</span>
+                        <span class="text-xs text-stone-500">Wird vorrangig geprüft</span>
+                    </div>
+                    <span id="priority-slot-indicator" class="w-4 h-4 rounded-full border-2 border-stone-300 shrink-0"></span>
+                </button>
+            </div>
+
+            <!-- Tag-Auswahl -->
+            <div class="space-y-2">
+                <label class="block text-xs font-bold text-stone-800">
+                    1. Wochentag wählen *
+                </label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" data-day="Montag" onclick="selectDay(this)" class="day-choice py-2.5 px-2 rounded-2xl border border-stone-200 bg-white hover:border-safeInk text-xs sm:text-sm font-semibold text-safeInk transition-all cursor-pointer">
+                        Montag
+                    </button>
+                    <button type="button" data-day="Mittwoch" onclick="selectDay(this)" class="day-choice py-2.5 px-2 rounded-2xl border border-stone-200 bg-white hover:border-safeInk text-xs sm:text-sm font-semibold text-safeInk transition-all cursor-pointer">
+                        Mittwoch
+                    </button>
+                    <button type="button" data-day="Freitag" onclick="selectDay(this)" class="day-choice py-2.5 px-2 rounded-2xl border border-stone-200 bg-white hover:border-safeInk text-xs sm:text-sm font-semibold text-safeInk transition-all cursor-pointer">
+                        Freitag
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pausen-Slots (12:50 bis 13:35 Uhr + optional während der Unterrichtszeit) -->
+            <div class="space-y-2">
+                <label class="block text-xs font-bold text-stone-800">
+                    2. Zeitraum wählen (Mittagspause 12:50 – 13:35 Uhr) *
+                </label>
+                <div id="pause-slots-container" class="space-y-2">
+                    <!-- Wird dynamisch gerendert -->
+                </div>
+            </div>
+
+            <!-- Verpflichtendes anonymes Interessen-Profil -->
+            <div class="rounded-2xl border border-stone-200 bg-safeBg/55 p-4 space-y-3.5">
+                <div class="flex items-center justify-between gap-2">
+                    <h3 class="text-sm font-extrabold text-safeInk">
+                        3. Dein anonymes Interessen-Profil *
+                    </h3>
+                    <span class="text-[11px] font-semibold text-stone-500">Verpflichtend</span>
+                </div>
+
+                <!-- Codewort -->
+                <div class="space-y-1">
+                    <label for="profile-codeword" class="block text-xs font-bold text-stone-700">
+                        Anonymes Codewort *
+                    </label>
+                    <div class="flex gap-2">
+                        <input type="text" id="profile-codeword" placeholder="z. B. Blauer Stern, Gelber Engel" class="flex-1 rounded-2xl border border-stone-200 bg-white focus:border-safeInk focus:outline-none px-3.5 py-2.5 text-sm text-safeInk placeholder:text-stone-400" />
+                        <button type="button" onclick="generateCodeword()" class="px-3.5 py-2.5 rounded-2xl border border-stone-200 bg-white hover:bg-stone-100 text-xs font-bold text-safeInk shrink-0 cursor-pointer">
+                            Generieren
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Alter & Geschlecht -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label for="profile-age" class="block text-xs font-bold text-stone-700">
+                            Alter *
+                        </label>
+                        <input type="number" id="profile-age" min="12" max="99" placeholder="z. B. 17" class="w-full rounded-2xl border border-stone-200 bg-white focus:border-safeInk focus:outline-none px-3.5 py-2.5 text-sm text-safeInk placeholder:text-stone-400" />
+                    </div>
+                    <div class="space-y-1">
+                        <label for="profile-gender" class="block text-xs font-bold text-stone-700">
+                            Geschlecht *
+                        </label>
+                        <select id="profile-gender" class="w-full rounded-2xl border border-stone-200 bg-white focus:border-safeInk focus:outline-none px-3.5 py-2.5 text-sm text-safeInk">
+                            <option value="">Bitte wählen...</option>
+                            <option value="Weiblich">Weiblich</option>
+                            <option value="Männlich">Männlich</option>
+                            <option value="Divers">Divers</option>
+                            <option value="Keine Angabe">Keine Angabe</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Lieblingsmusiker*in -->
+                <div class="space-y-1">
+                    <label for="profile-musician" class="block text-xs font-bold text-stone-700">
+                        Lieblingsmusiker*in *
+                    </label>
+                    <input type="text" id="profile-musician" placeholder="z. B. Harry Styles" class="w-full rounded-2xl border border-stone-200 bg-white focus:border-safeInk focus:outline-none px-3.5 py-2.5 text-sm text-safeInk placeholder:text-stone-400" />
+                </div>
+
+                <!-- Hobby & Lieblingsfarbe/Interesse -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label for="profile-hobby" class="block text-xs font-bold text-stone-700">
+                            Hobby *
+                        </label>
+                        <input type="text" id="profile-hobby" placeholder="z. B. Zeichnen, Musik hören" class="w-full rounded-2xl border border-stone-200 bg-white focus:border-safeInk focus:outline-none px-3.5 py-2.5 text-sm text-safeInk placeholder:text-stone-400" />
+                    </div>
+                    <div class="space-y-1">
+                        <label for="profile-color-interest" class="block text-xs font-bold text-stone-700">
+                            Lieblingsfarbe / Interesse *
+                        </label>
+                        <input type="text" id="profile-color-interest" placeholder="z. B. Lila" class="w-full rounded-2xl border border-stone-200 bg-white focus:border-safeInk focus:outline-none px-3.5 py-2.5 text-sm text-safeInk placeholder:text-stone-400" />
+                    </div>
+                </div>
+
+                <!-- Optionale Benachrichtigungs-E-Mail (für andere Nutzende komplett unsichtbar) -->
+                <div class="space-y-1 pt-2 border-t border-stone-200/80">
+                    <label for="profile-private-email" class="block text-xs font-bold text-stone-700">
+                        Benachrichtigungs-E-Mail <span class="font-normal text-stone-400">(optional, privat)</span>
+                    </label>
+                    <input type="email" id="profile-private-email" placeholder="name@beispiel.de" class="w-full rounded-2xl border border-stone-200 bg-white focus:border-safeInk focus:outline-none px-3.5 py-2.5 text-sm text-safeInk placeholder:text-stone-400" />
+                    <p class="text-[11px] text-stone-500">
+                        Bleibt für andere Nutzende vollständig unsichtbar und wird nur für Rückmeldungen/Hinweise geschützt genutzt.
+                    </p>
+                </div>
+            </div>
+
+            <p id="step3-error" class="hidden text-xs font-semibold text-safeInk bg-safeYellow/75 border border-safeOrange/60 rounded-2xl px-4 py-3">
+                Bitte wähle einen Termin-Slot (oder den Prioritäts-Slot) und fülle alle Pflichtfelder aus: Codewort, Alter, Geschlecht, Lieblingsmusiker*in, Hobby und Lieblingsfarbe/Interesse.
+            </p>
+
+            <div class="flex items-center gap-3 pt-1">
+                <button type="button" onclick="goToStep2()" class="px-4 py-3.5 rounded-full border border-stone-200 bg-white hover:bg-stone-50 text-xs sm:text-sm font-semibold text-stone-700 cursor-pointer">
+                    Zurück
+                </button>
+                <button type="button" onclick="submitBookingAndProfile()" class="flex-1 py-3.5 px-5 rounded-full bg-safeInk hover:bg-stone-800 text-white font-bold text-sm transition-all cursor-pointer">
+                    Termin anfragen & Profil speichern
+                </button>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- BESTÄTIGUNG & LIVE-STATUS NACH BUCHUNG                        -->
+        <!-- ============================================================ -->
+        <section id="step-confirmed" class="hidden fade-in bg-safeCard rounded-[28px] shadow-md shadow-amber-950/5 border border-stone-200/80 p-6 space-y-5">
+            <div class="space-y-1">
+                <span id="conf-status-pill" class="inline-block bg-safeYellow/80 text-safeInk text-xs font-bold px-3 py-1 rounded-full">
+                    ⏳ Wartet auf Bestätigung
+                </span>
+                <h2 id="conf-heading" class="text-2xl font-extrabold text-safeInk pt-1">
+                    Deine Terminanfrage ist eingegangen.
+                </h2>
+            </div>
+
+            <!-- Dynamische Rückmeldung bei Ablehnung durch die pädagogische Person -->
+            <div id="conf-rejection-box" class="hidden rounded-2xl bg-safeBgWarm border border-safeOrange p-4 space-y-3">
+                <p class="text-xs sm:text-sm font-semibold text-safeInk leading-relaxed">
+                    Es liegt nicht an dir – wir haben momentan einfach eine hohe Nachfrage, und es können nicht so viele Personen an einem Tag drankommen.
+                </p>
+                <p class="text-xs text-stone-700 leading-relaxed">
+                    Bitte fülle das Formular noch einmal neu aus oder gehe an den Start, um einen anderen Termin zu vereinbaren.
+                </p>
+                <button type="button" onclick="resetFlowToStart()" class="w-full py-3 px-4 rounded-full bg-safeInk hover:bg-stone-800 text-white text-xs sm:text-sm font-bold transition-all cursor-pointer">
+                    Zurück an den Start & neuen Termin vereinbaren
+                </button>
+            </div>
+
+            <div class="rounded-2xl bg-safeBg/70 border border-stone-200/80 p-4 space-y-2 text-xs sm:text-sm">
+                <div class="flex justify-between gap-2 border-b border-stone-200/70 pb-2">
+                    <span class="text-stone-500">Anonym-Code</span>
+                    <span id="conf-request-code" class="font-bold text-safeInk"></span>
+                </div>
+                <div class="flex justify-between gap-2 border-b border-stone-200/70 pb-2">
+                    <span class="text-stone-500">Codewort</span>
+                    <span id="conf-codeword" class="font-bold text-safeInk"></span>
+                </div>
+                <div class="flex justify-between gap-2 border-b border-stone-200/70 pb-2">
+                    <span class="text-stone-500">Gewünschter Zeitraum</span>
+                    <span id="conf-time" class="font-bold text-safeInk text-right"></span>
+                </div>
+                <div class="flex justify-between gap-2 border-b border-stone-200/70 pb-2">
+                    <span class="text-stone-500">Bestätigungsstatus</span>
+                    <span id="conf-approval-state" class="font-bold text-safeInk text-right"></span>
+                </div>
+                <div class="flex justify-between gap-2 border-b border-stone-200/70 pb-2">
+                    <span class="text-stone-500">Profil</span>
+                    <span id="conf-profile" class="font-semibold text-safeInk text-right"></span>
+                </div>
+                <div class="flex justify-between gap-2">
+                    <span class="text-stone-500">Benachrichtigung</span>
+                    <span id="conf-notif" class="font-medium text-stone-700 text-right"></span>
+                </div>
+            </div>
+
+            <div class="space-y-2.5">
+                <button type="button" onclick="openCommunityView()" class="w-full py-3.5 px-5 rounded-full bg-safeInk hover:bg-stone-800 text-white font-bold text-sm transition-all cursor-pointer">
+                    Freunde / Matches & Chat öffnen →
+                </button>
+                <button type="button" onclick="resetFlowToStart()" class="w-full py-3 px-5 rounded-full border border-stone-200 bg-white hover:bg-stone-50 text-xs font-bold text-stone-700 transition-all cursor-pointer">
+                    Zurück an den Start
+                </button>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- TERMIN-STATUS PRÜFEN (PER ANONYM-CODE)                        -->
+        <!-- ============================================================ -->
+        <section id="status-view" class="hidden fade-in bg-safeCard rounded-[28px] shadow-md shadow-amber-950/5 border border-stone-200/80 p-6 space-y-5">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <span class="inline-block bg-safeBlue/45 text-safeInk text-[11px] font-bold px-3 py-0.5 rounded-full">
+                        Rückmeldung prüfen
+                    </span>
+                    <h2 class="text-xl sm:text-2xl font-extrabold text-safeInk mt-1">
+                        Termin-Status abfragen
+                    </h2>
+                    <p class="text-xs text-stone-500 mt-0.5">
+                        Gib deinen Anonym-Code (z. B. KSL-102) ein, um zu sehen, ob dein Termin bestätigt oder abgelehnt wurde.
+                    </p>
+                </div>
+                <button type="button" onclick="goToStep1()" class="px-3.5 py-2 rounded-full bg-stone-100 hover:bg-stone-200 text-xs font-bold text-safeInk shrink-0 cursor-pointer">
+                    ← Start
+                </button>
+            </div>
+
+            <div class="flex gap-2">
+                <input type="text" id="status-code-input" onkeydown="if(event.key==='Enter') checkBookingStatusByCode()" placeholder="z. B. KSL-102" class="flex-1 rounded-2xl border border-stone-200 bg-white focus:border-safeInk focus:outline-none px-4 py-2.5 text-sm font-bold uppercase text-safeInk placeholder:normal-case placeholder:font-normal placeholder:text-stone-400" />
+                <button type="button" onclick="checkBookingStatusByCode()" class="px-4 py-2.5 rounded-2xl bg-safeInk hover:bg-stone-800 text-white text-xs sm:text-sm font-bold cursor-pointer">
+                    Prüfen
+                </button>
+            </div>
+
+            <div id="status-result-box" class="space-y-3">
+                <!-- Wird dynamisch befüllt -->
+            </div>
+
+            <div class="pt-2 border-t border-stone-100">
+                <button type="button" onclick="resetFlowToStart()" class="w-full py-3 px-4 rounded-full border border-stone-200 bg-white hover:bg-stone-50 text-xs font-bold text-safeInk cursor-pointer">
+                    Zurück an den Start & Formular neu ausfüllen
+                </button>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- FREUNDE / MATCHES: ANONYME PROFILE & IN-APP-CHAT             -->
+        <!-- ============================================================ -->
+        <section id="community-view" class="hidden fade-in bg-safeCard rounded-[28px] shadow-md shadow-amber-950/5 border border-stone-200/80 p-6 space-y-5">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <span class="inline-block bg-safeLilac/30 text-safeInk text-[11px] font-bold px-3 py-0.5 rounded-full">
+                        Anonymes Kennenlernen
+                    </span>
+                    <h2 class="text-xl sm:text-2xl font-extrabold text-safeInk mt-1">
+                        Freunde & Matches
+                    </h2>
+                    <p class="text-xs text-stone-500 mt-0.5">
+                        Gemeinsame Interessen entdecken und anonym schreiben – E-Mails sind nie sichtbar.
+                    </p>
+                </div>
+                <button type="button" onclick="goToStep1()" class="px-3.5 py-2 rounded-full bg-stone-100 hover:bg-stone-200 text-xs font-bold text-safeInk shrink-0 cursor-pointer">
+                    ← Start
+                </button>
+            </div>
+
+            <!-- Eigenes aktives Codewort für den Chat -->
+            <div class="rounded-2xl bg-safeBg/70 border border-stone-200/80 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <label for="chat-sender-input" class="text-xs font-bold text-stone-700">
+                    Dein anonymes Codewort im Chat:
+                </label>
+                <input type="text" id="chat-sender-input" oninput="renderCommunityList()" placeholder="z. B. Blauer Stern" class="rounded-xl border border-stone-200 bg-white focus:border-safeInk focus:outline-none px-3 py-1.5 text-xs font-bold text-safeInk sm:w-48" />
+            </div>
+
+            <!-- Such-/Filterfeld für Interessen -->
+            <div class="space-y-1">
+                <label for="interest-search-input" class="block text-xs font-bold text-stone-700">
+                    Nach Musiker*in, Hobby, Farbe oder Codewort filtern
+                </label>
+                <input type="text" id="interest-search-input" oninput="renderCommunityList()" placeholder="z. B. Harry Styles, Lila, Zeichnen..." class="w-full rounded-2xl border border-stone-200 bg-white focus:border-safeInk focus:outline-none px-3.5 py-2 text-xs sm:text-sm text-safeInk placeholder:text-stone-400" />
+            </div>
+
+            <!-- Karten der anonymen Profile -->
+            <div id="community-profiles-container" class="space-y-3">
+                <!-- Wird dynamisch gerendert -->
+            </div>
+
+            <!-- Direkter anonymer In-App-Chat -->
+            <div id="direct-chat-panel" class="hidden rounded-2xl border border-safeLilac/60 bg-safeBg/45 p-4 space-y-3">
+                <div class="flex items-center justify-between border-b border-stone-200/80 pb-2">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-stone-500">Anonymer Chat</span>
+                        <h3 id="direct-chat-heading" class="text-sm font-extrabold text-safeInk"></h3>
+                    </div>
+                    <button type="button" onclick="closeDirectChat()" class="text-xs font-bold text-stone-500 hover:text-safeInk px-2 py-1 cursor-pointer">
+                        Schließen ✕
+                    </button>
+                </div>
+
+                <div id="direct-chat-messages" class="space-y-2 max-h-52 overflow-y-auto bg-white rounded-xl border border-stone-200/70 p-3 text-xs">
+                    <!-- Nachrichten -->
+                </div>
+
+                <div class="flex gap-2">
+                    <input type="text" id="direct-chat-input" onkeydown="if(event.key==='Enter') sendDirectChat()" placeholder="Nachricht schreiben..." class="flex-1 rounded-xl border border-stone-200 bg-white focus:border-safeInk focus:outline-none px-3 py-2 text-xs text-safeInk placeholder:text-stone-400" />
+                    <button type="button" onclick="sendDirectChat()" class="px-4 py-2 rounded-xl bg-safeInk hover:bg-stone-800 text-white text-xs font-bold cursor-pointer">
+                        Senden
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer mit exakt "Ethik-Projekt · BBS Kusel" -->
+    <footer class="relative z-10 w-full max-w-xl mx-auto px-4 pt-4 pb-6 text-center">
+        <p class="text-xs font-medium text-stone-500">
+            Ethik-Projekt · BBS Kusel
+        </p>
+    </footer>
+
+    <!-- ============================================================ -->
+    <!-- ORGA-ANSICHT MODAL (PIN: 1234)                                -->
+    <!-- ============================================================ -->
+    <div id="orga-modal" class="hidden fixed inset-0 z-50 bg-stone-900/45 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="fade-in bg-safeCard w-full max-w-lg rounded-[28px] shadow-xl border border-stone-200 p-5 sm:p-6 space-y-4 max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-stone-100 pb-3 shrink-0">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Pädagogische Leitung</span>
+                    <h2 class="text-lg font-extrabold text-safeInk">Orga-Ansicht</h2>
+                </div>
+                <button type="button" onclick="closeOrgaModal()" class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs flex items-center justify-center cursor-pointer">
+                    ✕
+                </button>
+            </div>
+
+            <!-- PIN-Login -->
+            <div id="orga-pin-box" class="space-y-3 py-2">
+                <p class="text-xs text-stone-600 leading-relaxed">
+                    Bitte PIN eingeben, um Antworten, Dringlichkeit und Terminanfragen zu prüfen und über <strong>Termin bestätigen (Ja)</strong> oder <strong>Termin ablehnen (Nein)</strong> zu entscheiden (PIN: <strong>1234</strong>).
+                </p>
+                <div class="flex gap-2">
+                    <input type="password" id="orga-pin-input" inputmode="numeric" maxlength="6" onkeydown="if(event.key==='Enter') checkOrgaPin()" placeholder="PIN (1234)" class="flex-1 rounded-2xl border border-stone-300 bg-white focus:border-safeInk focus:outline-none px-4 py-2.5 text-sm font-bold tracking-widest text-safeInk" />
+                    <button type="button" onclick="checkOrgaPin()" class="px-5 py-2.5 rounded-2xl bg-safeInk hover:bg-stone-800 text-white text-xs sm:text-sm font-bold cursor-pointer">
+                        Freischalten
+                    </button>
+                </div>
+                <p id="orga-pin-error" class="hidden text-xs font-semibold text-red-700">
+                    Ungültige PIN. Bitte 1234 eingeben.
+                </p>
+            </div>
+
+            <!-- Orga-Inhalt nach PIN-Freischaltung -->
+            <div id="orga-content" class="hidden space-y-4 overflow-y-auto pr-1">
+                <!-- Kennzahlen -->
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="rounded-2xl bg-red-50 border border-red-200 p-2.5">
+                        <span id="orga-count-high" class="block text-lg font-extrabold text-red-800">0</span>
+                        <span class="text-[11px] font-semibold text-red-700">Prio Hoch</span>
+                    </div>
+                    <div class="rounded-2xl bg-amber-50 border border-amber-200 p-2.5">
+                        <span id="orga-count-open" class="block text-lg font-extrabold text-safeInk">0</span>
+                        <span class="text-[11px] font-semibold text-stone-700">Offen</span>
+                    </div>
+                    <div class="rounded-2xl bg-emerald-50 border border-emerald-200 p-2.5">
+                        <span id="orga-count-approved" class="block text-lg font-extrabold text-emerald-800">0</span>
+                        <span class="text-[11px] font-semibold text-emerald-700">Bestätigt</span>
+                    </div>
+                </div>
+
+                <!-- Aktionsleiste: CSV-Export & Demo-Daten/Reset -->
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <button type="button" onclick="exportOrgaCsv()" class="px-3.5 py-2 rounded-xl bg-safeInk hover:bg-stone-800 text-white text-xs font-bold cursor-pointer">
+                        CSV exportieren
+                    </button>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="restoreDemoData()" class="px-3 py-2 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-xs font-semibold text-stone-700 cursor-pointer">
+                            Demo-Daten laden
+                        </button>
+                        <button type="button" onclick="clearAllOrgaData()" class="px-3 py-2 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-xs font-semibold text-red-700 cursor-pointer">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sortierte Buchungsliste mit Ja/Nein-Entscheidung -->
+                <div id="orga-bookings-list" class="space-y-3">
+                    <!-- Wird dynamisch gerendert -->
+                </div>
+
+                <!-- Geschützte Benachrichtigungs-Hinweise -->
+                <div class="pt-3 border-t border-stone-200 space-y-2">
+                    <h3 class="text-xs font-extrabold uppercase tracking-wider text-stone-500">
+                        Geschützte Benachrichtigungs-Hinweise
+                    </h3>
+                    <div id="orga-notifications-list" class="space-y-2 text-xs">
+                        <!-- Wird dynamisch gerendert -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Zentrale Speicher-Schlüssel und Konfiguration
+        const ORGA_PIN = "1234";
+        const KEYS = {
+            bookings: "bbs_kusel_ethik_bookings_v4",
+            profiles: "bbs_kusel_ethik_profiles_v4",
+            chats: "bbs_kusel_ethik_chats_v4",
+            notifications: "bbs_kusel_ethik_notifications_v4"
+        };
+
+        // Mittagspausen-Slots (12:50 bis 13:35 Uhr) sowie optionale Unterrichtszeit
+        const PAUSE_SLOTS = [
+            "12:50 – 13:05 Uhr",
+            "13:05 – 13:20 Uhr",
+            "13:20 – 13:35 Uhr",
+            "Während der Unterrichtszeit (diskret)"
+        ];
+
+        const REJECTION_MESSAGE =
+            "Es liegt nicht an dir – wir haben momentan einfach eine hohe Nachfrage, und es können nicht so viele Personen an einem Tag drankommen.";
+
+        // Fest programmierte 3 Fragen des ruhigen Chatbots
+        const BOT_QUESTIONS = [
+            {
+                id: "q1",
+                prompt: "Kannst du aktuell noch gut alleine mit diesem Gefühl der Einsamkeit umgehen?",
+                criticalValue: "Nein"
+            },
+            {
+                id: "q2",
+                prompt: "Hast du im Alltag gerade jemanden, mit dem du offen darüber reden kannst?",
+                criticalValue: "Nein"
+            },
+            {
+                id: "q3",
+                prompt: "Hast du das Gefühl, dass dich dieses Gefühl schon länger belastet oder im Alltag ausbremst?",
+                criticalValue: "Ja"
+            }
+        ];
+
+        const CODEWORD_POOL = [
+            "Blauer Stern",
+            "Gelber Engel",
+            "Blauer Stern 01",
+            "Lila Wolke",
+            "Ruhiger Funken",
+            "Grünes Blatt"
+        ];
+
+        // Aktueller Laufzeit-Status
+        const appState = {
+            moods: [],
+            step1Text: "",
+            botIndex: 0,
+            botAnswers: [],
+            priority: "Normal", // "Hoch" | "Mittel" | "Normal"
+            prioritySlotSelected: false,
+            selectedDay: "",
+            selectedSlot: "",
+            activeProfile: null,
+            activeBookingId: "",
+            activeChatPartner: ""
+        };
+
+        let orgaUnlocked = false;
+        let toastTimeout = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            ensureInitialDemoData();
+            renderPauseSlots();
+            refreshBadges();
+        });
+
+        // Initiale Beispielprofile und Buchungen anlegen, falls noch leer
+        function ensureInitialDemoData() {
+            if (!localStorage.getItem(KEYS.profiles)) {
+                saveJson(KEYS.profiles, [
+                    {
+                        codeword: "Blauer Stern",
+                        age: "17",
+                        gender: "Weiblich",
+                        musician: "Harry Styles",
+                        hobby: "Spazieren gehen",
+                        colorInterest: "Lila",
+                        hasPrivateEmail: false
+                    },
+                    {
+                        codeword: "Blauer Stern 01",
+                        age: "16",
+                        gender: "Divers",
+                        musician: "Harry Styles",
+                        hobby: "Musik hören",
+                        colorInterest: "Blau",
+                        hasPrivateEmail: true
+                    },
+                    {
+                        codeword: "Gelber Engel",
+                        age: "18",
+                        gender: "Männlich",
+                        musician: "Harry Styles",
+                        hobby: "Zeichnen",
+                        colorInterest: "Gelb",
+                        hasPrivateEmail: false
+                    }
+                ]);
+            }
+
+            if (!localStorage.getItem(KEYS.bookings)) {
+                saveJson(KEYS.bookings, [
+                    {
+                        id: "demo-1",
+                        requestCode: "KSL-102",
+                        createdAt: formatNow(),
+                        priority: "Hoch",
+                        day: "Heute (Priorität)",
+                        slot: "Nächstmögliche Pause",
+                        codeword: "Blauer Stern 01",
+                        age: "16",
+                        gender: "Divers",
+                        musician: "Harry Styles",
+                        hobby: "Musik hören",
+                        colorInterest: "Blau",
+                        hasPrivateEmail: true,
+                        moods: ["Allein", "Leer"],
+                        step1Text: "Fühle mich in den Pausen oft ziemlich abgeschnitten.",
+                        botSummary: [
+                            "Alleine umgehen: Nein",
+                            "Jemand zum Reden: Nein",
+                            "Länger belastend: Ja"
+                        ],
+                        approvalStatus: "Offen" // "Offen" | "Bestätigt" | "Abgelehnt"
+                    }
+                ]);
+            }
+
+            if (!localStorage.getItem(KEYS.chats)) {
+                saveJson(KEYS.chats, {
+                    "Blauer Stern": [
+                        {
+                            from: "Gelber Engel",
+                            text: "Hey, feierst du auch Harry Styles? Falls du mal locker quatschen magst, gerne hier.",
+                            time: "13:02"
+                        }
+                    ]
+                });
+            }
+
+            if (!localStorage.getItem(KEYS.notifications)) {
+                saveJson(KEYS.notifications, [
+                    {
+                        id: "notif-demo-1",
+                        time: formatNow(),
+                        label: "Terminanfrage eingegangen (KSL-102)",
+                        detail: "Blauer Stern 01 · Priorität: Hoch · wartet auf Bestätigung oder Ablehnung"
+                    }
+                ]);
+            }
+        }
+
+        function restoreDemoData() {
+            localStorage.removeItem(KEYS.profiles);
+            localStorage.removeItem(KEYS.bookings);
+            localStorage.removeItem(KEYS.chats);
+            localStorage.removeItem(KEYS.notifications);
+            ensureInitialDemoData();
+            refreshBadges();
+            renderPauseSlots();
+            if (!document.getElementById("community-view").classList.contains("hidden")) {
+                renderCommunityList();
+            }
+            if (orgaUnlocked) {
+                renderOrgaDashboard();
+            }
+            showToast("Demo-Daten geladen", "Beispielprofile und Terminanfragen wurden wiederhergestellt.");
+        }
+
+        function clearAllOrgaData() {
+            saveJson(KEYS.bookings, []);
+            saveJson(KEYS.notifications, []);
+            refreshBadges();
+            renderPauseSlots();
+            if (orgaUnlocked) {
+                renderOrgaDashboard();
+            }
+            showToast("Zurückgesetzt", "Terminanfragen und Hinweise wurden geleert.");
+        }
+
+        // Helfer für localStorage
+        function loadJson(key, fallback) {
+            try {
+                const raw = localStorage.getItem(key);
+                return raw ? JSON.parse(raw) : fallback;
+            } catch (err) {
+                return fallback;
+            }
+        }
+
+        function saveJson(key, value) {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+            } catch (err) {
+                showToast("Speicherhinweis", "Lokaler Speicher konnte nicht aktualisiert werden.");
+            }
+        }
+
+        function formatNow() {
+            return new Date().toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
+        }
+
+        function refreshBadges() {
+            const bookings = loadJson(KEYS.bookings, []);
+            const profiles = loadJson(KEYS.profiles, []);
+            const openCount = bookings.filter(b => b.approvalStatus === "Offen").length;
+            document.getElementById("orga-open-badge").textContent = openCount;
+            document.getElementById("profiles-count-badge").textContent = profiles.length;
+        }
+
+        // Ansichten wechseln
+        function hideMainSections() {
+            ["step-1", "step-2", "step-3", "step-confirmed", "status-view", "community-view"].forEach(id => {
+                document.getElementById(id).classList.add("hidden");
+            });
+        }
+
+        function goToStep1() {
+            hideMainSections();
+            document.getElementById("step-1").classList.remove("hidden");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function goToStep2() {
+            appState.step1Text = document.getElementById("step1-text").value.trim();
+            hideMainSections();
+            document.getElementById("step-2").classList.remove("hidden");
+            initBotFlow();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function goToStep3() {
+            computePriorityFromBot();
+            hideMainSections();
+            document.getElementById("step-3").classList.remove("hidden");
+            syncPriorityBox();
+            renderPauseSlots();
+            prefillProfileInputs();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function openStatusView() {
+            hideMainSections();
+            document.getElementById("status-view").classList.remove("hidden");
+            const input = document.getElementById("status-code-input");
+            const bookings = loadJson(KEYS.bookings, []);
+            if (!input.value.trim() && appState.activeBookingId) {
+                const current = bookings.find(b => b.id === appState.activeBookingId);
+                if (current) input.value = current.requestCode;
+            } else if (!input.value.trim() && bookings.length > 0) {
+                input.value = bookings[0].requestCode;
+            }
+            checkBookingStatusByCode();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function openCommunityView() {
+            hideMainSections();
+            document.getElementById("community-view").classList.remove("hidden");
+            const senderInput = document.getElementById("chat-sender-input");
+            if (!senderInput.value.trim()) {
+                senderInput.value = (appState.activeProfile && appState.activeProfile.codeword) || "Blauer Stern";
+            }
+            renderCommunityList();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        // Schritt 1: Stimmungs-Chips umschalten
+        function toggleMoodChip(btn) {
+            const mood = btn.getAttribute("data-mood");
+            const index = appState.moods.indexOf(mood);
+            if (index >= 0) {
+                appState.moods.splice(index, 1);
+                btn.classList.remove("border-safeInk", "bg-safeLime/70");
+                btn.classList.add("border-stone-200", "bg-white");
+            } else {
+                appState.moods.push(mood);
+                btn.classList.remove("border-stone-200", "bg-white");
+                btn.classList.add("border-safeInk", "bg-safeLime/70");
+            }
+        }
+
+        // Schritt 2: Fester 3-Fragen-Chatbot
+        function initBotFlow() {
+            appState.botIndex = 0;
+            appState.botAnswers = [];
+            const logEl = document.getElementById("bot-chat-log");
+            logEl.innerHTML = "";
+            addBotMessage("Ich stelle dir kurz drei einfache Fragen – ganz ohne Bewertung.");
+            setTimeout(() => {
+                renderNextBotQuestion();
+            }, 180);
+        }
+
+        function addBotMessage(text) {
+            const logEl = document.getElementById("bot-chat-log");
+            const bubble = document.createElement("div");
+            bubble.className = "fade-in flex justify-start";
+            bubble.innerHTML = `
+                <div class="max-w-[88%] rounded-2xl rounded-tl-xs bg-safeBg border border-stone-200/80 px-4 py-3 text-xs sm:text-sm text-safeInk leading-relaxed">
+                    ${escapeHtml(text)}
+                </div>
+            `;
+            logEl.appendChild(bubble);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function addUserMessage(text) {
+            const logEl = document.getElementById("bot-chat-log");
+            const bubble = document.createElement("div");
+            bubble.className = "fade-in flex justify-end";
+            bubble.innerHTML = `
+                <div class="max-w-[75%] rounded-2xl rounded-tr-xs bg-safeInk text-white px-4 py-2 text-xs sm:text-sm font-semibold">
+                    ${escapeHtml(text)}
+                </div>
+            `;
+            logEl.appendChild(bubble);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function renderNextBotQuestion() {
+            const actionEl = document.getElementById("bot-action-area");
+            if (appState.botIndex < BOT_QUESTIONS.length) {
+                const q = BOT_QUESTIONS[appState.botIndex];
+                addBotMessage(q.prompt);
+                actionEl.innerHTML = `
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" onclick="recordBotAnswer('Ja')" class="py-3 px-4 rounded-2xl border border-stone-200 bg-white hover:border-safeInk text-sm font-bold text-safeInk transition-all cursor-pointer">
+                            Ja
+                        </button>
+                        <button type="button" onclick="recordBotAnswer('Nein')" class="py-3 px-4 rounded-2xl border border-stone-200 bg-white hover:border-safeInk text-sm font-bold text-safeInk transition-all cursor-pointer">
+                            Nein
+                        </button>
+                    </div>
+                `;
+            } else {
+                computePriorityFromBot();
+                addBotMessage("Danke für deine Antworten. Als Nächstes kannst du dir einen Zeitraum aussuchen und dein anonymes Profil ausfüllen.");
+                actionEl.innerHTML = `
+                    <button type="button" onclick="goToStep3()" class="w-full py-3.5 px-5 rounded-full bg-safeInk hover:bg-stone-800 text-white text-sm font-bold transition-all cursor-pointer">
+                        Weiter zur Terminwahl & Profil →
+                    </button>
+                `;
+            }
+        }
+
+        function recordBotAnswer(choice) {
+            const q = BOT_QUESTIONS[appState.botIndex];
+            if (!q) return;
+            addUserMessage(choice);
+            appState.botAnswers.push({
+                id: q.id,
+                answer: choice,
+                isCritical: choice === q.criticalValue
+            });
+            appState.botIndex += 1;
+            setTimeout(() => {
+                renderNextBotQuestion();
+            }, 180);
+        }
+
+        // Dringlichkeit/Priorität aus den 3 Antworten berechnen
+        function computePriorityFromBot() {
+            const q1 = appState.botAnswers.find(item => item.id === "q1");
+            const criticalTotal = appState.botAnswers.filter(item => item.isCritical).length;
+
+            if ((q1 && q1.answer === "Nein") || criticalTotal >= 2) {
+                appState.priority = "Hoch";
+            } else if (criticalTotal === 1) {
+                appState.priority = "Mittel";
+            } else {
+                appState.priority = "Normal";
+            }
+        }
+
+        // Schritt 3: Prioritäts-Slot, Wochentag, Slots & Pflicht-Profil
+        function syncPriorityBox() {
+            const box = document.getElementById("priority-slot-box");
+            if (appState.priority === "Hoch") {
+                box.classList.remove("hidden");
+            } else {
+                box.classList.add("hidden");
+                appState.prioritySlotSelected = false;
+            }
+            updatePrioritySlotUi();
+        }
+
+        function togglePrioritySlot() {
+            appState.prioritySlotSelected = !appState.prioritySlotSelected;
+            document.getElementById("step3-error").classList.add("hidden");
+
+            if (appState.prioritySlotSelected) {
+                appState.selectedDay = "";
+                appState.selectedSlot = "";
+                document.querySelectorAll(".day-choice").forEach(btn => {
+                    btn.classList.remove("border-safeInk", "bg-safeOrange/60");
+                    btn.classList.add("border-stone-200", "bg-white");
+                });
+                renderPauseSlots();
+            }
+            updatePrioritySlotUi();
+        }
+
+        function updatePrioritySlotUi() {
+            const btn = document.getElementById("priority-slot-btn");
+            const dot = document.getElementById("priority-slot-indicator");
+            if (!btn || !dot) return;
+
+            if (appState.prioritySlotSelected) {
+                btn.classList.add("border-safeInk", "bg-amber-50");
+                dot.classList.remove("border-stone-300");
+                dot.classList.add("bg-safeInk", "border-safeInk");
+            } else {
+                btn.classList.remove("border-safeInk", "bg-amber-50");
+                dot.classList.remove("bg-safeInk", "border-safeInk");
+                dot.classList.add("border-stone-300");
+            }
+        }
+
+        function selectDay(btn) {
+            appState.prioritySlotSelected = false;
+            updatePrioritySlotUi();
+            appState.selectedDay = btn.getAttribute("data-day");
+            appState.selectedSlot = "";
+            document.getElementById("step3-error").classList.add("hidden");
+
+            document.querySelectorAll(".day-choice").forEach(b => {
+                b.classList.remove("border-safeInk", "bg-safeOrange/60");
+                b.classList.add("border-stone-200", "bg-white");
+            });
+            btn.classList.remove("border-safeInk", "bg-white");
+            btn.classList.add("border-safeInk", "bg-safeOrange/60");
+
+            renderPauseSlots();
+        }
+
+        function renderPauseSlots() {
+            const container = document.getElementById("pause-slots-container");
+            const bookings = loadJson(KEYS.bookings, []);
+            const bookedSlotsForDay = appState.selectedDay
+                ? bookings
+                    .filter(b => b.approvalStatus === "Bestätigt" && b.day === appState.selectedDay)
+                    .map(b => b.slot)
+                : [];
+
+            container.innerHTML = PAUSE_SLOTS.map(slotLabel => {
+                const isBooked = bookedSlotsForDay.includes(slotLabel);
+                const isPicked = !appState.prioritySlotSelected && appState.selectedSlot === slotLabel;
+
+                if (isBooked) {
+                    return `
+                        <div class="w-full p-3 rounded-2xl border border-stone-200 bg-stone-100 text-stone-400 flex items-center justify-between cursor-not-allowed">
+                            <span class="text-xs sm:text-sm font-medium line-through">${slotLabel}</span>
+                            <span class="text-[11px] font-bold bg-stone-200 text-stone-600 px-2.5 py-0.5 rounded-full">Bestätigt / Belegt</span>
+                        </div>
+                    `;
+                }
+
+                const borderClass = isPicked
+                    ? "border-safeInk bg-amber-50/70"
+                    : "border-stone-200 bg-white hover:border-safeInk";
+                const dotClass = isPicked
+                    ? "bg-safeInk border-safeInk"
+                    : "border-stone-300";
+
+                return `
+                    <button type="button" onclick="selectPauseSlot('${slotLabel}')" class="w-full text-left p-3 rounded-2xl border ${borderClass} transition-all flex items-center justify-between cursor-pointer">
+                        <span class="text-xs sm:text-sm font-semibold text-safeInk">${slotLabel}</span>
+                        <span class="w-4 h-4 rounded-full border-2 ${dotClass} shrink-0"></span>
+                    </button>
+                `;
+            }).join("");
+        }
+
+        function selectPauseSlot(slotLabel) {
+            appState.prioritySlotSelected = false;
+            updatePrioritySlotUi();
+            appState.selectedSlot = slotLabel;
+            document.getElementById("step3-error").classList.add("hidden");
+            renderPauseSlots();
+        }
+
+        function generateCodeword() {
+            const picked = CODEWORD_POOL[Math.floor(Math.random() * CODEWORD_POOL.length)];
+            const suffix = Math.random() < 0.4 ? " " + String(Math.floor(1 + Math.random() * 9)).padStart(2, "0") : "";
+            document.getElementById("profile-codeword").value = picked + suffix;
+            document.getElementById("step3-error").classList.add("hidden");
+        }
+
+        function prefillProfileInputs() {
+            if (!appState.activeProfile) return;
+            document.getElementById("profile-codeword").value = appState.activeProfile.codeword || "";
+            document.getElementById("profile-age").value = appState.activeProfile.age || "";
+            document.getElementById("profile-gender").value = appState.activeProfile.gender || "";
+            document.getElementById("profile-musician").value = appState.activeProfile.musician || "";
+            document.getElementById("profile-hobby").value = appState.activeProfile.hobby || "";
+            document.getElementById("profile-color-interest").value = appState.activeProfile.colorInterest || "";
+        }
+
+        function submitBookingAndProfile() {
+            const errorEl = document.getElementById("step3-error");
+            const hasSlot = appState.prioritySlotSelected || (appState.selectedDay && appState.selectedSlot);
+
+            const codeword = document.getElementById("profile-codeword").value.trim();
+            const age = document.getElementById("profile-age").value.trim();
+            const gender = document.getElementById("profile-gender").value.trim();
+            const musician = document.getElementById("profile-musician").value.trim();
+            const hobby = document.getElementById("profile-hobby").value.trim();
+            const colorInterest = document.getElementById("profile-color-interest").value.trim();
+            const privateEmail = document.getElementById("profile-private-email").value.trim();
+
+            if (!hasSlot || !codeword || !age || !gender || !musician || !hobby || !colorInterest) {
+                errorEl.classList.remove("hidden");
+                return;
+            }
+
+            errorEl.classList.add("hidden");
+            computePriorityFromBot();
+
+            const finalDay = appState.prioritySlotSelected ? "Heute (Priorität)" : appState.selectedDay;
+            const finalSlot = appState.prioritySlotSelected ? "Nächstmögliche Pause" : appState.selectedSlot;
+            const requestCode = "KSL-" + String(Math.floor(200 + Math.random() * 799));
+
+            const botSummary = appState.botAnswers.map(item => {
+                if (item.id === "q1") return `Alleine umgehen: ${item.answer}`;
+                if (item.id === "q2") return `Jemand zum Reden: ${item.answer}`;
+                return `Länger belastend: ${item.answer}`;
+            });
+
+            const bookingId = "bk-" + Date.now();
+            const newBooking = {
+                id: bookingId,
+                requestCode,
+                createdAt: formatNow(),
+                priority: appState.priority,
+                day: finalDay,
+                slot: finalSlot,
+                codeword,
+                age,
+                gender,
+                musician,
+                hobby,
+                colorInterest,
+                hasPrivateEmail: Boolean(privateEmail),
+                moods: [...appState.moods],
+                step1Text: appState.step1Text,
+                botSummary,
+                approvalStatus: "Offen"
+            };
+
+            const bookings = loadJson(KEYS.bookings, []);
+            bookings.unshift(newBooking);
+            saveJson(KEYS.bookings, bookings);
+            appState.activeBookingId = bookingId;
+
+            // Anonymes Interessen-Profil speichern (ohne E-Mail-Adresse)
+            const publicProfile = {
+                codeword,
+                age,
+                gender,
+                musician,
+                hobby,
+                colorInterest,
+                hasPrivateEmail: Boolean(privateEmail)
+            };
+            appState.activeProfile = publicProfile;
+
+            const profiles = loadJson(KEYS.profiles, []);
+            const withoutSameCodeword = profiles.filter(p => p.codeword.toLowerCase() !== codeword.toLowerCase());
+            withoutSameCodeword.unshift(publicProfile);
+            saveJson(KEYS.profiles, withoutSameCodeword);
+
+            // Geschützten Benachrichtigungshinweis für die Orga-Ansicht speichern
+            const notifications = loadJson(KEYS.notifications, []);
+            notifications.unshift({
+                id: "notif-" + Date.now(),
+                time: formatNow(),
+                label: `Neue Terminanfrage (${requestCode})`,
+                detail: privateEmail
+                    ? `${codeword} · ${finalDay} (${finalSlot}) · Dringlichkeit: ${appState.priority} · geschützter E-Mail-Hinweis aktiv`
+                    : `${codeword} · ${finalDay} (${finalSlot}) · Dringlichkeit: ${appState.priority}`
+            });
+            saveJson(KEYS.notifications, notifications.slice(0, 40));
+
+            refreshBadges();
+            renderPauseSlots();
+            renderConfirmedView(newBooking);
+
+            showToast(
+                "Anfrage gespeichert",
+                `Anonym-Code ${requestCode} · Wartet auf Bestätigung durch die pädagogische Person.`
+            );
+
+            hideMainSections();
+            document.getElementById("step-confirmed").classList.remove("hidden");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function renderConfirmedView(booking) {
+            const pill = document.getElementById("conf-status-pill");
+            const heading = document.getElementById("conf-heading");
+            const rejectionBox = document.getElementById("conf-rejection-box");
+            const approvalStateEl = document.getElementById("conf-approval-state");
+
+            document.getElementById("conf-request-code").textContent = booking.requestCode;
+            document.getElementById("conf-codeword").textContent = booking.codeword;
+            document.getElementById("conf-time").textContent = `${booking.day} · ${booking.slot}`;
+            document.getElementById("conf-profile").textContent =
+                `${booking.age} J. · ${booking.gender} · ${booking.musician} · ${booking.hobby} · ${booking.colorInterest}`;
+            document.getElementById("conf-notif").textContent = booking.hasPrivateEmail
+                ? "Geschützter E-Mail-Hinweis hinterlegt (für andere unsichtbar)"
+                : "Anonym innerhalb der Seite aktiv";
+
+            if (booking.approvalStatus === "Bestätigt") {
+                pill.className = "inline-block bg-safeLime/80 text-safeInk text-xs font-bold px-3 py-1 rounded-full";
+                pill.textContent = "✓ Termin bestätigt";
+                heading.textContent = "Dein Termin ist bestätigt.";
+                approvalStateEl.textContent = "Bestätigt (Ja)";
+                rejectionBox.classList.add("hidden");
+            } else if (booking.approvalStatus === "Abgelehnt") {
+                pill.className = "inline-block bg-safeOrange/70 text-safeInk text-xs font-bold px-3 py-1 rounded-full";
+                pill.textContent = "Hinweis zum Termin";
+                heading.textContent = "Aktuell kein Slot an diesem Tag möglich.";
+                approvalStateEl.textContent = "Abgelehnt (Nein – hohe Nachfrage)";
+                rejectionBox.classList.remove("hidden");
+            } else {
+                pill.className = "inline-block bg-safeYellow/80 text-safeInk text-xs font-bold px-3 py-1 rounded-full";
+                pill.textContent = "⏳ Offen";
+                heading.textContent = "Deine Terminanfrage ist vorgemerkt.";
+                approvalStateEl.textContent = "Wartet auf Prüfung (Ja / Nein)";
+                rejectionBox.classList.add("hidden");
+            }
+        }
+
+        // Termin-Status per Anonym-Code prüfen
+        function checkBookingStatusByCode() {
+            const queryCode = (document.getElementById("status-code-input").value || "").trim().toUpperCase();
+            const box = document.getElementById("status-result-box");
+            const bookings = loadJson(KEYS.bookings, []);
+
+            if (!queryCode) {
+                box.innerHTML = `<p class="text-xs text-stone-500">Bitte gib deinen Anonym-Code ein.</p>`;
+                return;
+            }
+
+            const found = bookings.find(b => (b.requestCode || "").toUpperCase() === queryCode);
+            if (!found) {
+                box.innerHTML = `
+                    <div class="rounded-2xl border border-stone-200 bg-safeBg/50 p-4 text-xs text-stone-600">
+                        Kein Eintrag zum Code <strong>${escapeHtml(queryCode)}</strong> gefunden.
+                    </div>
+                `;
+                return;
+            }
+
+            if (found.approvalStatus === "Bestätigt") {
+                box.innerHTML = `
+                    <div class="rounded-2xl border border-emerald-300 bg-emerald-50/70 p-4 space-y-1.5">
+                        <span class="inline-block text-[11px] font-extrabold bg-emerald-200 text-emerald-900 px-2.5 py-0.5 rounded-full">Bestätigt (Ja)</span>
+                        <h3 class="text-sm font-extrabold text-safeInk pt-1">${escapeHtml(found.codeword)} (${escapeHtml(found.requestCode)})</h3>
+                        <p class="text-xs text-stone-700">Zeitraum: <strong>${escapeHtml(found.day)} · ${escapeHtml(found.slot)}</strong></p>
+                        <p class="text-xs text-stone-600">Dein Termin wurde von der pädagogischen Begleitung bestätigt.</p>
+                    </div>
+                `;
+            } else if (found.approvalStatus === "Abgelehnt") {
+                box.innerHTML = `
+                    <div class="rounded-2xl border border-safeOrange bg-safeBgWarm p-4 space-y-2.5">
+                        <span class="inline-block text-[11px] font-extrabold bg-safeOrange text-safeInk px-2.5 py-0.5 rounded-full">Abgelehnt (Nein)</span>
+                        <h3 class="text-sm font-extrabold text-safeInk">${escapeHtml(found.codeword)} (${escapeHtml(found.requestCode)})</h3>
+                        <p class="text-xs sm:text-sm font-semibold text-safeInk leading-relaxed">
+                            ${escapeHtml(REJECTION_MESSAGE)}
+                        </p>
+                        <p class="text-xs text-stone-700 leading-relaxed">
+                            Bitte fülle das Formular noch einmal neu aus oder gehe an den Start, um einen anderen Termin zu vereinbaren.
+                        </p>
+                    </div>
+                `;
+            } else {
+                box.innerHTML = `
+                    <div class="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 space-y-1.5">
+                        <span class="inline-block text-[11px] font-extrabold bg-safeYellow text-safeInk px-2.5 py-0.5 rounded-full">Offen</span>
+                        <h3 class="text-sm font-extrabold text-safeInk pt-1">${escapeHtml(found.codeword)} (${escapeHtml(found.requestCode)})</h3>
+                        <p class="text-xs text-stone-700">Gewünschter Zeitraum: <strong>${escapeHtml(found.day)} · ${escapeHtml(found.slot)}</strong></p>
+                        <p class="text-xs text-stone-600">Die pädagogische Person prüft aktuell die Antworten und Dringlichkeit.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function resetFlowToStart() {
+            appState.moods = [];
+            appState.step1Text = "";
+            appState.botIndex = 0;
+            appState.botAnswers = [];
+            appState.priority = "Normal";
+            appState.prioritySlotSelected = false;
+            appState.selectedDay = "";
+            appState.selectedSlot = "";
+
+            document.getElementById("step1-text").value = "";
+            document.querySelectorAll(".mood-chip").forEach(btn => {
+                btn.classList.remove("border-safeInk", "bg-safeLime/70");
+                btn.classList.add("border-stone-200", "bg-white");
+            });
+            document.querySelectorAll(".day-choice").forEach(btn => {
+                btn.classList.remove("border-safeInk", "bg-safeOrange/60");
+                btn.classList.add("border-stone-200", "bg-white");
+            });
+            document.getElementById("step3-error").classList.add("hidden");
+
+            goToStep1();
+        }
+
+        // ============================================================
+        // FREUNDE / MATCHES: ANONYME PROFILE & IN-APP-CHAT
+        // ============================================================
+        function renderCommunityList() {
+            const container = document.getElementById("community-profiles-container");
+            const searchTerm = (document.getElementById("interest-search-input").value || "").trim().toLowerCase();
+            const currentSender = (document.getElementById("chat-sender-input").value || "").trim();
+
+            const myProfile = appState.activeProfile || {};
+            const myMusician = (myProfile.musician || "").trim().toLowerCase();
+            const myHobby = (myProfile.hobby || "").trim().toLowerCase();
+            const myColor = (myProfile.colorInterest || "").trim().toLowerCase();
+
+            const profiles = loadJson(KEYS.profiles, []);
+
+            const withMatches = profiles.map(p => {
+                const shared = [];
+                if (myMusician && p.musician && p.musician.toLowerCase() === myMusician) {
+                    shared.push(`Musiker*in: ${p.musician}`);
+                }
+                if (myHobby && p.hobby && p.hobby.toLowerCase() === myHobby) {
+                    shared.push(`Hobby: ${p.hobby}`);
+                }
+                if (myColor && p.colorInterest && p.colorInterest.toLowerCase() === myColor) {
+                    shared.push(`Farbe/Interesse: ${p.colorInterest}`);
+                }
+                return { ...p, shared };
+            });
+
+            const filtered = withMatches.filter(p => {
+                if (!searchTerm) return true;
+                const combined = `${p.codeword} ${p.age} ${p.gender} ${p.musician} ${p.hobby} ${p.colorInterest}`.toLowerCase();
+                return combined.includes(searchTerm);
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="rounded-2xl border border-stone-200 bg-safeBg/40 p-4 text-center text-xs text-stone-500">
+                        Keine passenden anonymen Profile gefunden.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(p => {
+                const isSelf = currentSender && p.codeword.toLowerCase() === currentSender.toLowerCase();
+                const matchChips = p.shared.length > 0
+                    ? `<div class="flex flex-wrap gap-1.5 pt-1">${p.shared.map(item => `<span class="text-[11px] font-bold bg-safeLime/70 text-safeInk px-2.5 py-0.5 rounded-full">✓ Gemeinsam: ${escapeHtml(item)}</span>`).join("")}</div>`
+                    : "";
+
+                return `
+                    <div class="rounded-2xl border border-stone-200 bg-white p-4 space-y-2">
+                        <div class="flex items-center justify-between gap-2">
+                            <div>
+                                <span class="text-sm font-extrabold text-safeInk">${escapeHtml(p.codeword)}</span>
+                                <span class="text-xs text-stone-500 ml-1.5">· ${escapeHtml(p.age)} Jahre · ${escapeHtml(p.gender)}</span>
+                            </div>
+                            ${isSelf ? `<span class="text-[10px] font-bold bg-stone-100 text-stone-600 px-2.5 py-0.5 rounded-full">Du</span>` : ""}
+                        </div>
+                        <div class="text-xs text-stone-700 space-y-0.5">
+                            <p><span class="text-stone-400">Lieblingsmusiker*in:</span> <strong>${escapeHtml(p.musician)}</strong></p>
+                            <p><span class="text-stone-400">Hobby:</span> ${escapeHtml(p.hobby)}</p>
+                            <p><span class="text-stone-400">Lieblingsfarbe / Interesse:</span> ${escapeHtml(p.colorInterest)}</p>
+                        </div>
+                        ${matchChips}
+                        <div class="pt-1 flex justify-end">
+                            <button type="button" onclick="openDirectChat('${escapeHtml(p.codeword)}')" class="px-3.5 py-1.5 rounded-full bg-safeInk hover:bg-stone-800 text-white text-xs font-bold transition-all cursor-pointer">
+                                Anonym schreiben
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function openDirectChat(targetCodeword) {
+            appState.activeChatPartner = targetCodeword;
+            document.getElementById("direct-chat-heading").textContent = `Chat mit ${targetCodeword}`;
+            document.getElementById("direct-chat-panel").classList.remove("hidden");
+            renderDirectChatMessages();
+            document.getElementById("direct-chat-input").focus();
+        }
+
+        function closeDirectChat() {
+            appState.activeChatPartner = "";
+            document.getElementById("direct-chat-panel").classList.add("hidden");
+        }
+
+        function renderDirectChatMessages() {
+            const box = document.getElementById("direct-chat-messages");
+            const chats = loadJson(KEYS.chats, {});
+            const list = chats[appState.activeChatPartner] || [];
+
+            if (list.length === 0) {
+                box.innerHTML = `<p class="text-stone-400 text-center py-3">Noch keine Nachrichten. Schreib gern als Erste*r.</p>`;
+                return;
+            }
+
+            box.innerHTML = list.map(msg => `
+                <div class="rounded-xl bg-safeBg/60 border border-stone-200/70 p-2.5 space-y-0.5">
+                    <div class="flex items-center justify-between text-[10px] text-stone-500">
+                        <span class="font-bold text-safeInk">${escapeHtml(msg.from)}</span>
+                        <span>${escapeHtml(msg.time)}</span>
+                    </div>
+                    <p class="text-xs text-stone-800">${escapeHtml(msg.text)}</p>
+                </div>
+            `).join("");
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function sendDirectChat() {
+            const input = document.getElementById("direct-chat-input");
+            const text = input.value.trim();
+            if (!text || !appState.activeChatPartner) return;
+
+            const sender = (document.getElementById("chat-sender-input").value || "").trim() || "Anonym";
+            const nowTime = new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+
+            const chats = loadJson(KEYS.chats, {});
+            if (!chats[appState.activeChatPartner]) {
+                chats[appState.activeChatPartner] = [];
+            }
+            chats[appState.activeChatPartner].push({
+                from: sender,
+                text,
+                time: nowTime
+            });
+            saveJson(KEYS.chats, chats);
+
+            const profiles = loadJson(KEYS.profiles, []);
+            const partnerProfile = profiles.find(p => p.codeword === appState.activeChatPartner);
+            const notifications = loadJson(KEYS.notifications, []);
+            notifications.unshift({
+                id: "notif-" + Date.now(),
+                time: formatNow(),
+                label: "Neue anonyme Nachricht",
+                detail: partnerProfile && partnerProfile.hasPrivateEmail
+                    ? `${sender} → ${appState.activeChatPartner} · geschützter E-Mail-Hinweis aktiv (Adresse verborgen)`
+                    : `${sender} → ${appState.activeChatPartner} · im In-App-Chat eingegangen`
+            });
+            saveJson(KEYS.notifications, notifications.slice(0, 40));
+
+            input.value = "";
+            renderDirectChatMessages();
+            showToast("Nachricht gesendet", `Anonyme Nachricht an ${appState.activeChatPartner} gesendet.`);
+        }
+
+        // ============================================================
+        // ORGA-ANSICHT MODAL (PIN: 1234) MIT JA / NEIN-ENTSCHEIDUNG
+        // ============================================================
+        function openOrgaModal() {
+            document.getElementById("orga-modal").classList.remove("hidden");
+            if (orgaUnlocked) {
+                document.getElementById("orga-pin-box").classList.add("hidden");
+                document.getElementById("orga-content").classList.remove("hidden");
+                renderOrgaDashboard();
+            } else {
+                document.getElementById("orga-pin-box").classList.remove("hidden");
+                document.getElementById("orga-content").classList.add("hidden");
+            }
+        }
+
+        function closeOrgaModal() {
+            document.getElementById("orga-modal").classList.add("hidden");
+        }
+
+        function checkOrgaPin() {
+            const pinVal = document.getElementById("orga-pin-input").value.trim();
+            if (pinVal === ORGA_PIN) {
+                orgaUnlocked = true;
+                document.getElementById("orga-pin-error").classList.add("hidden");
+                document.getElementById("orga-pin-box").classList.add("hidden");
+                document.getElementById("orga-content").classList.remove("hidden");
+                renderOrgaDashboard();
+            } else {
+                document.getElementById("orga-pin-error").classList.remove("hidden");
+            }
+        }
+
+        function setBookingApproval(bookingId, decision) {
+            // decision: "Bestätigt" (Ja) | "Abgelehnt" (Nein)
+            let updatedItem = null;
+            const bookings = loadJson(KEYS.bookings, []).map(item => {
+                if (item.id === bookingId) {
+                    item.approvalStatus = decision;
+                    updatedItem = item;
+                }
+                return item;
+            });
+            saveJson(KEYS.bookings, bookings);
+
+            if (updatedItem) {
+                const notifications = loadJson(KEYS.notifications, []);
+                notifications.unshift({
+                    id: "notif-" + Date.now(),
+                    time: formatNow(),
+                    label: decision === "Bestätigt"
+                        ? `Termin bestätigt (${updatedItem.requestCode})`
+                        : `Termin abgelehnt (${updatedItem.requestCode})`,
+                    detail: `${updatedItem.codeword} · ${updatedItem.day} (${updatedItem.slot}) · Entscheidung: ${decision === "Bestätigt" ? "Ja" : "Nein"}`
+                });
+                saveJson(KEYS.notifications, notifications.slice(0, 40));
+
+                if (!document.getElementById("step-confirmed").classList.contains("hidden") && appState.activeBookingId === bookingId) {
+                    renderConfirmedView(updatedItem);
+                }
+                if (!document.getElementById("status-view").classList.contains("hidden")) {
+                    checkBookingStatusByCode();
+                }
+
+                showToast(
+                    decision === "Bestätigt" ? "Termin bestätigt (Ja)" : "Termin abgelehnt (Nein)",
+                    `${updatedItem.requestCode} (${updatedItem.codeword}) wurde als „${decision}“ markiert.`
+                );
+            }
+
+            refreshBadges();
+            renderPauseSlots();
+            renderOrgaDashboard();
+        }
+
+        function renderOrgaDashboard() {
+            const bookings = loadJson(KEYS.bookings, []);
+            const rankMap = { "Hoch": 3, "Mittel": 2, "Normal": 1 };
+
+            const sortedBookings = [...bookings].sort((a, b) => {
+                const aOpen = a.approvalStatus === "Offen" ? 1 : 0;
+                const bOpen = b.approvalStatus === "Offen" ? 1 : 0;
+                if (aOpen !== bOpen) return bOpen - aOpen;
+                return (rankMap[b.priority] || 1) - (rankMap[a.priority] || 1);
+            });
+
+            document.getElementById("orga-count-high").textContent = bookings.filter(b => b.approvalStatus === "Offen" && b.priority === "Hoch").length;
+            document.getElementById("orga-count-open").textContent = bookings.filter(b => b.approvalStatus === "Offen").length;
+            document.getElementById("orga-count-approved").textContent = bookings.filter(b => b.approvalStatus === "Bestätigt").length;
+
+            const listEl = document.getElementById("orga-bookings-list");
+            if (sortedBookings.length === 0) {
+                listEl.innerHTML = `<p class="text-xs text-stone-400 text-center py-5">Keine Terminanfragen vorhanden.</p>`;
+            } else {
+                listEl.innerHTML = sortedBookings.map(b => {
+                    const isOpen = b.approvalStatus === "Offen";
+                    let prioTag = `<span class="text-[11px] font-bold bg-stone-100 text-stone-700 px-2.5 py-0.5 rounded-full">Dringlichkeit: Normal</span>`;
+                    let cardStyle = "border-stone-200 bg-white";
+
+                    if (b.priority === "Hoch") {
+                        prioTag = `<span class="text-[11px] font-extrabold bg-red-100 text-red-800 border border-red-200 px-2.5 py-0.5 rounded-full">Dringlichkeit: Hoch</span>`;
+                        if (isOpen) cardStyle = "border-red-300 bg-red-50/30";
+                    } else if (b.priority === "Mittel") {
+                        prioTag = `<span class="text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-200 px-2.5 py-0.5 rounded-full">Dringlichkeit: Mittel</span>`;
+                        if (isOpen) cardStyle = "border-safeOrange/70 bg-amber-50/25";
+                    }
+
+                    let decisionBadge = `<span class="text-[10px] font-bold bg-safeYellow/80 text-safeInk px-2 py-0.5 rounded-full">Offen</span>`;
+                    if (b.approvalStatus === "Bestätigt") {
+                        decisionBadge = `<span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">Bestätigt (Ja)</span>`;
+                    } else if (b.approvalStatus === "Abgelehnt") {
+                        decisionBadge = `<span class="text-[10px] font-bold bg-stone-200 text-stone-700 px-2 py-0.5 rounded-full">Abgelehnt (Nein)</span>`;
+                    }
+
+                    const privateEmailStatus = b.hasPrivateEmail
+                        ? `<p class="text-[11px] font-semibold text-stone-600 mt-1">Benachrichtigung: Geschützte E-Mail hinterlegt (Adresse verdeckt)</p>`
+                        : "";
+
+                    const botChips = (b.botSummary && b.botSummary.length > 0)
+                        ? `<div class="flex flex-wrap gap-1.5 mt-2">${b.botSummary.map(item => `<span class="text-[11px] bg-safeBlue/35 text-safeInk px-2 py-0.5 rounded-lg">${escapeHtml(item)}</span>`).join("")}</div>`
+                        : "";
+
+                    const moodChips = (b.moods && b.moods.length > 0)
+                        ? `<div class="flex flex-wrap gap-1 mt-1.5">${b.moods.map(m => `<span class="text-[10px] font-semibold bg-safeLime/60 text-safeInk px-2 py-0.5 rounded-full">${escapeHtml(m)}</span>`).join("")}</div>`
+                        : "";
+
+                    const textQuote = b.step1Text
+                        ? `<p class="mt-2 text-xs text-stone-700 bg-safeBg/60 border border-stone-200/70 rounded-xl p-2.5 italic">„${escapeHtml(b.step1Text)}“</p>`
+                        : "";
+
+                    return `
+                        <div class="rounded-2xl border ${cardStyle} p-4 space-y-2">
+                            <div class="flex items-start justify-between gap-2">
+                                <div>
+                                    <span class="text-sm font-extrabold text-safeInk">${escapeHtml(b.codeword)}</span>
+                                    <span class="text-[11px] font-bold text-stone-500 ml-1.5">(${escapeHtml(b.requestCode || "")})</span>
+                                    <span class="block text-xs font-semibold text-stone-700 mt-0.5">${escapeHtml(b.day)} · ${escapeHtml(b.slot)}</span>
+                                    <span class="block text-[10px] text-stone-400">Erstellt: ${escapeHtml(b.createdAt)}</span>
+                                </div>
+                                <div class="flex flex-col items-end gap-1">
+                                    ${prioTag}
+                                    ${decisionBadge}
+                                </div>
+                            </div>
+                            <p class="text-xs text-stone-700 pt-1">
+                                <strong>${escapeHtml(b.age)} J.</strong> · ${escapeHtml(b.gender)} · Musiker*in: <strong>${escapeHtml(b.musician)}</strong> · Hobby: ${escapeHtml(b.hobby)} · Farbe/Interesse: ${escapeHtml(b.colorInterest)}
+                            </p>
+                            ${privateEmailStatus}
+                            ${botChips}
+                            ${moodChips}
+                            ${textQuote}
+                            <div class="pt-2 border-t border-stone-100 grid grid-cols-2 gap-2">
+                                <button type="button" onclick="setBookingApproval('${b.id}', 'Bestätigt')" class="py-2 px-3 rounded-xl text-xs font-bold ${b.approvalStatus === "Bestätigt" ? "bg-emerald-700 text-white" : "bg-emerald-600 hover:bg-emerald-700 text-white"} cursor-pointer">
+                                    Termin bestätigen (Ja)
+                                </button>
+                                <button type="button" onclick="setBookingApproval('${b.id}', 'Abgelehnt')" class="py-2 px-3 rounded-xl text-xs font-bold ${b.approvalStatus === "Abgelehnt" ? "bg-stone-800 text-white" : "bg-stone-200 hover:bg-stone-300 text-stone-800"} cursor-pointer">
+                                    Termin ablehnen (Nein)
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join("");
+            }
+
+            const notifListEl = document.getElementById("orga-notifications-list");
+            const notifications = loadJson(KEYS.notifications, []);
+            if (notifications.length === 0) {
+                notifListEl.innerHTML = `<p class="text-stone-400 text-xs">Keine Benachrichtigungs-Hinweise vorhanden.</p>`;
+            } else {
+                notifListEl.innerHTML = notifications.map(n => `
+                    <div class="rounded-xl border border-stone-200 bg-safeBg/40 p-2.5 flex items-start justify-between gap-2">
+                        <div>
+                            <p class="font-bold text-safeInk">${escapeHtml(n.label)}</p>
+                            <p class="text-stone-600 mt-0.5">${escapeHtml(n.detail)}</p>
+                        </div>
+                        <span class="text-[10px] text-stone-400 shrink-0">${escapeHtml(n.time)}</span>
+                    </div>
+                `).join("");
+            }
+        }
+
+        function exportOrgaCsv() {
+            const bookings = loadJson(KEYS.bookings, []);
+            const headers = [
+                "Anonym-Code",
+                "Zeitpunkt",
+                "Dringlichkeit",
+                "Termin-Entscheidung",
+                "Tag",
+                "Zeitraum",
+                "Codewort",
+                "Alter",
+                "Geschlecht",
+                "Lieblingsmusiker*in",
+                "Hobby",
+                "Lieblingsfarbe/Interesse",
+                "Geschützte E-Mail",
+                "Check-in",
+                "Stimmungen",
+                "Nachricht"
+            ];
+            const rows = bookings.map(b => [
+                b.requestCode || "",
+                b.createdAt,
+                b.priority,
+                b.approvalStatus,
+                b.day,
+                b.slot,
+                b.codeword,
+                b.age,
+                b.gender,
+                b.musician,
+                b.hobby,
+                b.colorInterest,
+                b.hasPrivateEmail ? "Ja (verborgen)" : "Nein",
+                (b.botSummary || []).join(" | "),
+                (b.moods || []).join(", "),
+                (b.step1Text || "").replace(/"/g, '""')
+            ]);
+            const csvContent = [headers, ...rows]
+                .map(row => row.map(cell => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(";"))
+                .join("\n");
+
+            const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "ethik-projekt-termine-profile.csv";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // Toast-Hinweise und HTML-Escaping
+        function showToast(title, desc) {
+            document.getElementById("toast-title").textContent = title;
+            document.getElementById("toast-desc").textContent = desc;
+            document.getElementById("toast-banner").classList.remove("hidden");
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(hideToast, 4200);
+        }
+
+        function hideToast() {
+            document.getElementById("toast-banner").classList.add("hidden");
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+    </script>
+</body>
+</html>
